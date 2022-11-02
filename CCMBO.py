@@ -1,10 +1,13 @@
 from MBO import MBO
-from numpy import empty, append, random, double, cov, zeros, arange, vstack, std, ceil, sqrt
+from numpy import empty, append, random, double, cov, zeros, arange, vstack, std, ceil, sqrt, vectorize
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from scipy.stats import levy
 from sklearn_som.som import SOM
 import time
+
+# 因为有O的原故，所以upper与lower必为数值类型 而不能是数组
+# cause O is one dimension array, upper and lower must be number rather than array.
 
 class CCMBO(MBO):
     def __init__(self, cost_function, sort_function, params):
@@ -114,9 +117,8 @@ class CCMBO(MBO):
                         self.new_land2[j].positions[k] = self.lower + self.upper - self.new_land2[j].positions[k]
 
     def calculate_new_pop_cost(self, new_pop):
+        self.rectify_value(new_pop)
         for i in range(self.popSize):
-            for k in range(self.dimension):
-                new_pop[i].positions[k] = max(self.upper, min(self.lower, new_pop[i].positions[k]))
             new_pop[i].cost = self.costFunction(self.pop[i].positions)
 
     def iterate(self):
@@ -145,8 +147,11 @@ class CCMBO(MBO):
                 iris_som = SOM(m=self.popSize, n=1, dim=self.dimension)
                 iris_som.fit(cluster)
                 O = iris_som.predict(cluster)
-                for i in range(len(O)):
-                    O[i] = max(self.lower, min(self.upper, O[i]))
+
+                # rectify O
+                rectify = lambda t: min(self.upper, max(self.lower, t))
+                vf = vectorize(rectify)
+                O = vf(O)
                 chosen = random.default_rng().choice(self.popSize, size=M, replace=False)
                 chosen2 = random.default_rng().choice(M, size=M, replace=False)
                 # 从保护种群数量的角度说，应是从O中选出M个，换掉pop中的M个

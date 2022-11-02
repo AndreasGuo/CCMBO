@@ -1,13 +1,13 @@
 import random
 from scipy.stats import levy
-from numpy import empty, append, random, double
+from numpy import array, empty, append, random, double, vectorize
 from copy import copy
 
 
 class Individual:
     def __init__(self, mbo=None, positions=[], cost=0):
         if mbo is None:
-            self.positions = copy(positions)
+            self.positions = array(copy(positions), dtype=double)
             self.cost = copy(cost)
         else:
             self.positions = random.rand(mbo.dimension) * (mbo.upper - mbo.lower) + mbo.lower
@@ -42,6 +42,17 @@ class MBO:
         self.t = 1
         self.pop = append(self.land1, self.land2)
         self.curve_fig = empty(self.popSize, dtype=double)
+
+    def rectify_value(self, individuals): 
+        if type(self.lower) in [double, float, int]:
+            for i in individuals:
+                rectify = lambda t: double(min(self.upper, max(self.lower, t)))
+                vf = vectorize(rectify)
+                i.positions = vf(i.positions)
+        else:
+            for i in individuals:
+                for k in self.dimension:
+                    i.positions[k] = min(self.upper[k], max(self.lower[k], i.positions[k]))
 
     def init_pop(self):
         for i in range(self.popSize):
@@ -80,9 +91,8 @@ class MBO:
                             + self.S_max / (self.t ** 2) * (dx - 0.5)
 
     def calculate_cost(self):
+        self.rectify_value(self.pop)
         for i in range(self.popSize):
-            for k in range(self.dimension):
-                self.pop[i].positions[k] = max(self.lower, min(self.upper, self.pop[i].positions[k]))
             self.pop[i].cost = self.costFunction(self.pop[i].positions)
 
     def iterate(self):
