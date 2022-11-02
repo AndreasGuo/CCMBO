@@ -1,7 +1,9 @@
 import random
 from scipy.stats import levy
-from numpy import array, empty, append, random, double, vectorize,Inf
+from numpy import array, empty, append, random, double, vectorize,Inf, zeros
 from copy import copy
+from nsga2 import dominates
+from copy import deepcopy
 
 
 class Individual:
@@ -61,11 +63,10 @@ class MBO:
         for i in range(self.popSize):
             self.pop[i] = Individual(self)
             if self.x_best is None:
-                self.x_best = Individual(positions=self.pop[i].positions, cost=self.pop[i].cost)
+                self.x_best = deepcopy(self.pop[i]) #Individual(positions=self.pop[i].positions, cost=self.pop[i].cost)
             else:
-                if self.pop[i].cost < self.x_best.cost:
+                if dominates(self.pop[i].cost, self.x_best.cost):
                     self.x_best = Individual(positions=self.pop[i].positions, cost=self.pop[i].cost)
-        print(self.x_best.cost)
 
     def migrate(self):
         for i in range(self.NP1):

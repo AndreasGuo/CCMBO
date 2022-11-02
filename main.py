@@ -21,7 +21,7 @@ params={
     'C_r': 0.1
 }
 def cost_function(a):
-    return array([a[0]*a[0] + a[1]*a[1]])
+    return array([a[0]*a[0], a[1]*a[1]])
 
 
 def cmp_by_cost(x,y):

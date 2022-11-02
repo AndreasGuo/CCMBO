@@ -5,6 +5,7 @@ from copy import deepcopy
 from scipy.stats import levy
 from sklearn_som.som import SOM
 import time
+from nsga2 import dominates
 
 # 因为有O的原故，所以upper与lower必为数值类型 而不能是数组
 # cause O is one dimension array, upper and lower must be number rather than array.
@@ -14,7 +15,6 @@ class CCMBO(MBO):
         MBO.__init__(self, cost_function, sort_function, params)
         self.epsilon = params['epsilon']  # threshold of re-initialization, compare to standard deviation of the best fitness.
         self.C_r = params['C_r']
-        self.pool = ThreadPoolExecutor(max_workers=10)
 
     def cov_jk(self, land, j, k):
         if land == 1:
@@ -29,13 +29,13 @@ class CCMBO(MBO):
         return cov(j_array, k_array)[0,1]
 
     def cov_land_matrix(self, land):
-        
+        pool = ThreadPoolExecutor(max_workers=10)
         size = self.dimension
         cov_land = zeros([size, size])
         j_array = arange(0, self.dimension)
         k_array = arange(0, self.dimension)
         iterable_land = zeros(size, dtype=int) + land
-        result_iterators = self.pool.map(self.cov_jk, iterable_land, j_array, k_array)
+        result_iterators = pool.map(self.cov_jk, iterable_land, j_array, k_array)
         i = 0
         for result in result_iterators:
             cov_land[int(i / size), i % size] = result
@@ -82,7 +82,7 @@ class CCMBO(MBO):
                 temp2 = eig_temp2.dot(q_land2.T)
                 cost1 = self.costFunction(temp1)
                 cost2 = self.costFunction(temp2)
-                if cost1 < cost2:
+                if dominates(cost1, cost2):
                     self.new_land1[i].positions = temp1
                     self.new_land1[i].cost = cost1
                 else:
@@ -162,6 +162,7 @@ class CCMBO(MBO):
                 self.calculate_new_pop_cost(new_pop)
                 new_pop = self.sortFunction(new_pop)
             # if re-initialization condition is true
+            # TODO: 这里在多目标函数下可能会有问题
             delta = std(self.curve_fig[0:self.t-1])
             self.reinitializing_land2(delta)
             # combine
@@ -170,8 +171,8 @@ class CCMBO(MBO):
             self.pop = append(self.land1, self.land2)
             self.calculate_cost()
             self.pop = self.sortFunction(self.pop)
-            if self.x_best.cost > self.pop[0].cost:
+            if dominates(self.pop[0].cost, self.x_best.cost):
                 self.x_best = deepcopy(self.pop[0])
-            self.curve_fig[self.t-1] = self.x_best.cost
+            self.curve_fig[self.t-1] = sum(self.x_best.cost)
             print("best cost is {0}, time={1:.2f}".format(self.x_best.cost, (time.time() - start_time)))
             self.t += 1
