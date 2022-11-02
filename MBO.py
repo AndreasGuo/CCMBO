@@ -1,6 +1,6 @@
 import random
 from scipy.stats import levy
-from numpy import array, empty, append, random, double, vectorize
+from numpy import array, empty, append, random, double, vectorize,Inf
 from copy import copy
 
 
@@ -12,7 +12,10 @@ class Individual:
         else:
             self.positions = random.rand(mbo.dimension) * (mbo.upper - mbo.lower) + mbo.lower
             self.cost = mbo.costFunction(self.positions)
-
+        self.dominationSet = array([], dtype=int)
+        self.dominatedCount = int(0)
+        self.rank = Inf
+        self.crowding_distance = 0
 
 class MBO:
     def __init__(self, cost_function, sort_function, params):

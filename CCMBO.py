@@ -14,6 +14,7 @@ class CCMBO(MBO):
         MBO.__init__(self, cost_function, sort_function, params)
         self.epsilon = params['epsilon']  # threshold of re-initialization, compare to standard deviation of the best fitness.
         self.C_r = params['C_r']
+        self.pool = ThreadPoolExecutor(max_workers=10)
 
     def cov_jk(self, land, j, k):
         if land == 1:
@@ -28,13 +29,13 @@ class CCMBO(MBO):
         return cov(j_array, k_array)[0,1]
 
     def cov_land_matrix(self, land):
-        pool = ThreadPoolExecutor(max_workers=10)
+        
         size = self.dimension
         cov_land = zeros([size, size])
         j_array = arange(0, self.dimension)
         k_array = arange(0, self.dimension)
         iterable_land = zeros(size, dtype=int) + land
-        result_iterators = pool.map(self.cov_jk, iterable_land, j_array, k_array)
+        result_iterators = self.pool.map(self.cov_jk, iterable_land, j_array, k_array)
         i = 0
         for result in result_iterators:
             cov_land[int(i / size), i % size] = result

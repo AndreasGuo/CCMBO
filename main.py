@@ -1,10 +1,10 @@
-from numpy import log
+from numpy import log,array
 from numpy import arange
 from functools import cmp_to_key
 from MBO import MBO
 from CCMBO import CCMBO
 import matplotlib.pyplot as pl
-
+from nsga2 import nsga2
 params={
     'popSize': 300,
     'NP1': 180,
@@ -21,19 +21,21 @@ params={
     'C_r': 0.1
 }
 def cost_function(a):
-    return a[0]*a[0] + a[1]*a[1]
+    return array([a[0]*a[0] + a[1]*a[1]])
 
 
 def cmp_by_cost(x,y):
-    if x.cost > y.cost:
+    if x.rank > y.rank:
         return 1
-    else:
-        return -1
-    return 0
+    elif x.rank == y.rank and x.crowding_distance < y.crowding_distance:
+        return 1
+    else: 
+        return 0
 
 
-def sort_function(a):
-    return sorted(a, key=cmp_to_key(cmp_by_cost))
+def sort_function(individuals):
+    nsga2(individuals)
+    return sorted(individuals, key=cmp_to_key(cmp_by_cost))
 
 mbo = CCMBO(cost_function, sort_function, params)
 best, curve = mbo.boot()
