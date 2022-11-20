@@ -1,7 +1,7 @@
 import numpy as np
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 
-pool = ThreadPoolExecutor(max_workers=10)
+pool = ProcessPoolExecutor(max_workers=10)
 
 def dominates(x, y):
     return np.sum(x<=y) == len(x)
@@ -76,6 +76,7 @@ def crowding_distance(individuals, rankSet):
         
         for i in range(r_set_len):
             individuals[rset[i]].crowding_distance = sum(distances[i])
+        # print(individuals[0].crowding_distance)
     
     pool.map(cd_one_set, np.arange(len(rankSet)))
     #for ri in range(len(rankSet)):

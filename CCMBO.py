@@ -1,5 +1,5 @@
 from MBO import MBO
-from numpy import empty, append, random, double, cov, zeros, arange, vstack, std, ceil, sqrt, vectorize
+from numpy import empty, append, random, double, cov, zeros, arange, vstack, std, ceil, sqrt, vectorize, average
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from scipy.stats import levy
@@ -15,6 +15,12 @@ class CCMBO(MBO):
         MBO.__init__(self, cost_function, sort_function, params)
         self.epsilon = params['epsilon']  # threshold of re-initialization, compare to standard deviation of the best fitness.
         self.C_r = params['C_r']
+
+    def cov(self, j_array, k_array):
+        j_len = len(j_array)
+        k_len = len(k_array)
+        j_avg = average(j_array)
+        k_avg = average(k_array)
 
     def cov_jk(self, land, j, k):
         if land == 1:

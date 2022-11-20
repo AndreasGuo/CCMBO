@@ -5,6 +5,7 @@ from MBO import MBO
 from CCMBO import CCMBO
 import matplotlib.pyplot as pl
 from nsga2 import nsga2
+from multiprocessing import freeze_support
 params={
     'popSize': 300,
     'NP1': 180,
@@ -37,9 +38,11 @@ def sort_function(individuals):
     nsga2(individuals)
     return sorted(individuals, key=cmp_to_key(cmp_by_cost))
 
-mbo = CCMBO(cost_function, sort_function, params)
-best, curve = mbo.boot()
-print(best.positions)
-pl.plot(arange(mbo.maxGen), curve)
-pl.title('cost')
-pl.show()
+if __name__ == '__main__':
+    freeze_support()
+    mbo = CCMBO(cost_function, sort_function, params)
+    best, curve = mbo.boot()
+    print(best.positions)
+    pl.plot(arange(mbo.maxGen), curve)
+    pl.title('cost')
+    pl.show()
